@@ -1,0 +1,68 @@
+<?php
+
+namespace App\Repository;
+
+use App\Entity\Gift;
+use App\Entity\Stock;
+use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
+use Doctrine\Persistence\ManagerRegistry;
+
+/**
+ * @method Stock|null find($id, $lockMode = null, $lockVersion = null)
+ * @method Stock|null findOneBy(array $criteria, array $orderBy = null)
+ * @method Stock[]    findAll()
+ * @method Stock[]    findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
+ */
+class StockRepository extends ServiceEntityRepository
+{
+    public function __construct(ManagerRegistry $registry)
+    {
+        parent::__construct($registry, Stock::class);
+    }
+
+    public function getStats($idStock = null)
+    {
+        $qb = $this->createQueryBuilder('s')
+            ->from(Stock::class, 'st')
+            ->innerJoin(Gift::class, 'g', 'on s.id = g.idStock')
+            ->select('s.id as idStock,MAX(g.giftPrice) AS max_price,MIN(g.giftPrice) AS min_price,AVG(g.giftPrice) AS avg_price,COUNT(g.id) AS nbr_gifts')
+            ->groupBy('s.id');
+
+        if (!is_null($idStock)) {
+            $qb->where('s.id = :val')
+                ->setParameter('val', $idStock);
+        }
+
+        return $qb->getQuery()
+            ->getResult();
+    }
+
+    // /**
+    //  * @return Stock[] Returns an array of Stock objects
+    //  */
+    /*
+    public function findByExampleField($value)
+    {
+        return $this->createQueryBuilder('s')
+            ->andWhere('s.exampleField = :val')
+            ->setParameter('val', $value)
+            ->orderBy('s.id', 'ASC')
+            ->setMaxResults(10)
+            ->getQuery()
+            ->getResult()
+        ;
+    }
+    */
+
+    /*
+    public function findOneBySomeField($value): ?Stock
+    {
+        return $this->createQueryBuilder('s')
+            ->andWhere('s.exampleField = :val')
+            ->setParameter('val', $value)
+            ->getQuery()
+            ->getOneOrNullResult()
+        ;
+    }
+    */
+}
